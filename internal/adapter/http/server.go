@@ -48,12 +48,12 @@ func (s *server) Engine() Engine {
 	return s.engine
 }
 
-func newServer(cfg config.Config, shutdowner fx.Shutdowner) Server {
+func newServer(cfg *config.Config, shutdowner fx.Shutdowner) Server {
 	var mode string
 	switch cfg.Server.Env {
-	case "production":
+	case "prd":
 		mode = gin.ReleaseMode
-	case "testing":
+	case "test":
 		mode = gin.TestMode
 	default:
 		mode = gin.DebugMode
@@ -71,7 +71,7 @@ func newServer(cfg config.Config, shutdowner fx.Shutdowner) Server {
 	s := &server{
 		engine: engine,
 		httpSrv: &http.Server{
-			Addr:    fmt.Sprintf("%d", cfg.Server.Port),
+			Addr:    fmt.Sprintf(":%d", cfg.Server.Port),
 			Handler: engine.Handler(),
 		},
 		shutdowner: shutdowner,
