@@ -14,23 +14,28 @@ services:
     volumes:
       - .:/app
       - /app/bin
+    depends_on:
+      db:
+        condition: service_healthy
     networks:
       - app-network
 
   db:
     image: postgres:16
     container_name: e-commerce-db
+    env_file:
+      - .env
     environment:
-      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_DB: ${DB_DATABASE:-postgres}
+      POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
-      POSTGRES_DB: ${DB_NAME:-postgres}
     ports:
       - ${DB_PORT}:${DB_PORT}
     volumes:
       - pgdata:/var/lib/postgresql/data
     restart: always
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d ${DB_NAME:-postgres}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_DATABASE:-postgres}"]
       interval: 5s
       timeout: 3s
       retries: 5
