@@ -1,8 +1,6 @@
 package database
 
 import (
-	"fmt"
-
 	"github.com/Gsc23/e-commerce-api/e-commerce-api/pkg/config"
 	"go.uber.org/fx"
 )
@@ -17,18 +15,14 @@ type DBResult struct {
 	Database DB
 }
 
-func NewDatabase(lc fx.Lifecycle, p DBParams) (*DBResult, error) {
-	db, err := newPostgres(p.Config)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize database: %w", err)
-	}
-
+func NewDatabase(lc fx.Lifecycle, p DBParams) (DBResult, error) {
+	db := newPostgres(p.Config)
 	lc.Append(fx.Hook{
 		OnStart: db.Start,
 		OnStop:  db.Stop,
 	})
 
-	return &DBResult{Database: db}, nil
+	return DBResult{Database: db}, nil
 }
 
 func DBModule() fx.Option {

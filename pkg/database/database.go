@@ -19,7 +19,7 @@ type PostgresImpl struct {
 	pool *pgxpool.Pool
 }
 
-func newPostgres(config *config.Config) (DB, error) {
+func newPostgres(config *config.Config) DB {
 	connUrl := url.URL{
 		Scheme: "postgres",
 		User:   url.UserPassword(config.DB.User, config.DB.Pass),
@@ -35,15 +35,15 @@ func newPostgres(config *config.Config) (DB, error) {
 
 	poolConfig, err := pgxpool.ParseConfig(connUrl.String())
 	if err != nil {
-		return nil, err
+		return nil
 	}
 
 	conn, err := pgxpool.NewWithConfig(context.Background(), poolConfig)
 	if err != nil {
-		return nil, err
+		return nil
 	}
 
-	return &PostgresImpl{pool: conn}, nil
+	return &PostgresImpl{pool: conn}
 }
 
 func (p *PostgresImpl) Start(ctx context.Context) error {
