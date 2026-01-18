@@ -15,6 +15,9 @@ type Config interface {
 	ServerHost() string
 	Env() string
 	DBConnString() string
+	LoggerLevel() string
+	LoggerColors() bool
+	LoggerTrace() bool
 }
 
 type config struct {
@@ -31,6 +34,11 @@ type config struct {
 		Pass     string      `env:"PASSWORD"`
 		Schema   null.String `env:"SCHEMA" default:"app"`
 	} `env:"DB"`
+	Logger struct {
+		Level      string `env:"LEVEL"`
+		IsColorful bool   `env:"COLORFULL"`
+		Trace      bool   `env:"TRACE"`
+	} `env:"LOGGER"`
 }
 
 func NewConfig() (ConfigResult, error) {
@@ -102,4 +110,16 @@ func (c *config) DBConnString() string {
 	}
 
 	return connUrl.String()
+}
+
+func (c *config) LoggerLevel() string {
+	return c.Logger.Level
+}
+
+func (c *config) LoggerColors() bool {
+	return c.Logger.IsColorful
+}
+
+func (c *config) LoggerTrace() bool {
+	return c.Logger.Trace
 }
