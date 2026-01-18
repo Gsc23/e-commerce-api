@@ -3,13 +3,24 @@ package config
 import (
 	"errors"
 	"fmt"
+	"net/url"
 
 	"github.com/guregu/null/v6"
 	"github.com/joho/godotenv"
 	"go-simpler.org/env"
 )
 
-type Config struct {
+type Config interface {
+	ServerPort() int
+	ServerHost() string
+	Env() string
+	DBConnString() string
+	LoggerLevel() string
+	LoggerColors() bool
+	LoggerTrace() bool
+}
+
+type config struct {
 	Server struct {
 		Host string `env:"HOST"`
 		Port int    `env:"PORT" default:"8080"`
@@ -23,29 +34,45 @@ type Config struct {
 		Pass     string      `env:"PASSWORD"`
 		Schema   null.String `env:"SCHEMA" default:"app"`
 	} `env:"DB"`
+	Logger struct {
+		Level      string `env:"LEVEL"`
+		IsColorful bool   `env:"COLORFULL"`
+		Trace      bool   `env:"TRACE"`
+	} `env:"LOGGER"`
 }
 
-func loadEnvFile(envFile string) (*Config, error) {
+func NewConfig() (ConfigResult, error) {
+	config := loadEnvFile(".env")
+	if config == nil {
+		return ConfigResult{}, errors.New("failed to load dotenv")
+	}
+
+	return ConfigResult{
+		Config: config,
+	}, nil
+}
+
+func loadEnvFile(envFile string) *config {
 	if err := godotenv.Load(envFile); err != nil {
-		return nil, err
+		return nil
 	}
 
 	opts := &env.Options{NameSep: "_"}
 
-	var config Config
+	var config config
 
 	if err := env.Load(&config, opts); err != nil {
-		return nil, fmt.Errorf("could not parse config: %w", err)
+		return nil
 	}
 
 	if err := config.validate(); err != nil {
-		return nil, fmt.Errorf("config validation failed: %w", err)
+		return nil
 	}
 
-	return &config, nil
+	return &config
 }
 
-func (c *Config) validate() error {
+func (c *config) validate() error {
 	if c.Server.Port == 0 {
 		return errors.New("server port is required")
 	}
@@ -54,4 +81,45 @@ func (c *Config) validate() error {
 	}
 
 	return nil
+}
+
+func (c *config) ServerPort() int {
+	return c.Server.Port
+}
+
+func (c *config) ServerHost() string {
+	return c.Server.Host
+}
+
+func (c *config) Env() string {
+	return c.Server.Env
+}
+
+func (c *config) DBConnString() string {
+	connUrl := url.URL{
+		Scheme: "postgres",
+		User:   url.UserPassword(c.DB.User, c.DB.Pass),
+		Host:   c.DB.Host,
+		Path:   c.DB.Database,
+	}
+
+	if c.DB.Schema.Valid {
+		q := connUrl.Query()
+		q.Add("options", fmt.Sprintf("-csearch_path=%s", c.DB.Schema.String))
+		connUrl.RawQuery = q.Encode()
+	}
+
+	return connUrl.String()
+}
+
+func (c *config) LoggerLevel() string {
+	return c.Logger.Level
+}
+
+func (c *config) LoggerColors() bool {
+	return c.Logger.IsColorful
+}
+
+func (c *config) LoggerTrace() bool {
+	return c.Logger.Trace
 }

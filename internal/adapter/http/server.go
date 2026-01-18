@@ -9,7 +9,6 @@ import (
 	"github.com/Gsc23/e-commerce-api/e-commerce-api/pkg/config"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"go.uber.org/fx"
 )
 
 type Engine interface {
@@ -23,9 +22,8 @@ type Server interface {
 }
 
 type server struct {
-	engine     Engine
-	httpSrv    *http.Server
-	shutdowner fx.Shutdowner
+	engine  Engine
+	httpSrv *http.Server
 }
 
 func (s *server) Run(ctx context.Context) error {
@@ -48,9 +46,9 @@ func (s *server) Engine() Engine {
 	return s.engine
 }
 
-func newServer(cfg *config.Config, shutdowner fx.Shutdowner) Server {
+func newServer(cfg config.Config) Server {
 	var mode string
-	switch cfg.Server.Env {
+	switch cfg.Env() {
 	case "prd":
 		mode = gin.ReleaseMode
 	case "test":
@@ -62,7 +60,7 @@ func newServer(cfg *config.Config, shutdowner fx.Shutdowner) Server {
 	gin.SetMode(mode)
 	engine := gin.Default()
 	engine.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{cfg.Server.Host, "http://localhost:3000"},
+		AllowOrigins:     []string{cfg.ServerHost(), "http://localhost:3000"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Content-Type", "Authorization"},
 		AllowCredentials: true,
@@ -71,10 +69,9 @@ func newServer(cfg *config.Config, shutdowner fx.Shutdowner) Server {
 	s := &server{
 		engine: engine,
 		httpSrv: &http.Server{
-			Addr:    fmt.Sprintf(":%d", cfg.Server.Port),
+			Addr:    fmt.Sprintf(":%d", cfg.ServerPort()),
 			Handler: engine.Handler(),
 		},
-		shutdowner: shutdowner,
 	}
 
 	// missing route setups would go here

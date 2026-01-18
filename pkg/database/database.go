@@ -2,63 +2,52 @@ package database
 
 import (
 	"context"
-	"fmt"
-	"net/url"
 
 	"github.com/Gsc23/e-commerce-api/e-commerce-api/pkg/config"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type DB interface {
-	Pool() *pgxpool.Pool
+	GetPool() *pgxpool.Pool
 	Start(ctx context.Context) error
 	Stop(ctx context.Context) error
 }
 
 type PostgresImpl struct {
-	pool *pgxpool.Pool
+	DBConfig *pgxpool.Config
+	Pool     *pgxpool.Pool
 }
 
-func newPostgres(config *config.Config) DB {
-	connUrl := url.URL{
-		Scheme: "postgres",
-		User:   url.UserPassword(config.DB.User, config.DB.Pass),
-		Host:   config.DB.Host,
-		Path:   config.DB.Database,
-	}
-
-	if config.DB.Schema.Valid {
-		q := connUrl.Query()
-		q.Add("options", fmt.Sprintf("-csearch_path=%s", config.DB.Schema.String))
-		connUrl.RawQuery = q.Encode()
-	}
-
-	poolConfig, err := pgxpool.ParseConfig(connUrl.String())
+func newPostgres(cfg config.Config) (*PostgresImpl, error) {
+	DBConfig, err := pgxpool.ParseConfig(cfg.DBConnString())
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
-	conn, err := pgxpool.NewWithConfig(context.Background(), poolConfig)
-	if err != nil {
-		return nil
-	}
-
-	return &PostgresImpl{pool: conn}
+	return &PostgresImpl{
+		DBConfig: DBConfig,
+	}, nil
 }
 
 func (p *PostgresImpl) Start(ctx context.Context) error {
-	if err := p.pool.Ping(ctx); err != nil {
+	pool, err := pgxpool.NewWithConfig(ctx, p.DBConfig)
+	if err != nil {
 		return err
 	}
 
-	return nil
+	p.Pool = pool
+	return p.Pool.Ping(ctx)
 }
 
 func (p *PostgresImpl) Stop(ctx context.Context) error {
-	p.pool.Close()
+	p.Pool.Close()
 	return nil
 }
 
-func (p *PostgresImpl) Pool() *pgxpool.Pool {
-	return p.pool
+func (p *PostgresImpl) GetPool() *pgxpool.Pool {
+	if p.Pool == nil {
+		panic("database not started")
+	}
+
+	return p.Pool
 }
