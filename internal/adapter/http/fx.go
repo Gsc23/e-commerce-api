@@ -7,8 +7,7 @@ import (
 
 type ServerParams struct {
 	fx.In
-	Config     *config.Config
-	Shutdowner fx.Shutdowner
+	Config config.Config
 }
 
 type ServerResult struct {
@@ -17,7 +16,7 @@ type ServerResult struct {
 }
 
 func NewServer(lc fx.Lifecycle, p ServerParams) ServerResult {
-	srv := newServer(p.Config, p.Shutdowner)
+	srv := newServer(p.Config)
 	lc.Append(fx.Hook{OnStart: srv.Run, OnStop: srv.Stop})
 
 	return ServerResult{Server: srv}
@@ -26,8 +25,8 @@ func NewServer(lc fx.Lifecycle, p ServerParams) ServerResult {
 func HTTPModule() fx.Option {
 	return fx.Module("http",
 		fx.Provide(NewServer),
-		fx.Invoke(StartHTTPServer),
+		fx.Invoke(ResolveHTTPServer),
 	)
 }
 
-func StartHTTPServer(_ Server) {}
+func ResolveHTTPServer(_ Server) {}
