@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/guregu/null/v6"
 	"github.com/joho/godotenv"
 	"go-simpler.org/env"
 )
@@ -15,11 +16,12 @@ type Config struct {
 		Env  string `env:"ENV" default:"dev"`
 	} `env:"SERVER"`
 	DB struct {
-		Host     string `env:"HOST"`
-		Port     string `env:"PORT"`
-		Database string `env:"DATABASE"`
-		User     string `env:"USER"`
-		Pass     string `env:"PASSWORD"`
+		Host     string      `env:"HOST"`
+		Port     string      `env:"PORT"`
+		Database string      `env:"DATABASE"`
+		User     string      `env:"USER"`
+		Pass     string      `env:"PASSWORD"`
+		Schema   null.String `env:"SCHEMA" default:"app"`
 	} `env:"DB"`
 }
 
