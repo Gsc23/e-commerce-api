@@ -2,7 +2,6 @@ package logger
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"log/slog"
 	"os"
@@ -10,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Gsc23/e-commerce-api/e-commerce-api/pkg/config"
+	"github.com/Gsc23/e-commerce-api/pkg/config"
 	"github.com/lmittmann/tint"
 	slogmulti "github.com/samber/slog-multi"
 )
@@ -65,7 +64,7 @@ func (l *LoggerConfig) handleLogLevel(level string) error {
 	case "ERROR":
 		l.Level = slog.LevelError
 	default:
-		return fmt.Errorf("Unknow level name: %s", level)
+		l.Level = slog.LevelInfo
 	}
 
 	return nil

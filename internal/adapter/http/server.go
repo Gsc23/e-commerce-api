@@ -6,23 +6,19 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/Gsc23/e-commerce-api/e-commerce-api/pkg/config"
+	"github.com/Gsc23/e-commerce-api/pkg/config"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
-type Engine interface {
-	ServeHTTP(http.ResponseWriter, *http.Request)
-}
-
 type Server interface {
-	Engine() Engine
+	Engine() *gin.Engine
 	Run(context.Context) error
 	Stop(context.Context) error
 }
 
 type server struct {
-	engine  Engine
+	engine  *gin.Engine
 	httpSrv *http.Server
 }
 
@@ -42,7 +38,7 @@ func (s *server) Stop(ctx context.Context) error {
 	return s.httpSrv.Shutdown(ctx)
 }
 
-func (s *server) Engine() Engine {
+func (s *server) Engine() *gin.Engine {
 	return s.engine
 }
 

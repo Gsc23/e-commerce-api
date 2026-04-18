@@ -1,13 +1,19 @@
 package http
 
 import (
-	"github.com/Gsc23/e-commerce-api/e-commerce-api/pkg/config"
+	"context"
+	"fmt"
+
+	"github.com/Gsc23/e-commerce-api/pkg/config"
+	"github.com/Gsc23/e-commerce-api/pkg/logger"
 	"go.uber.org/fx"
 )
 
 type ServerParams struct {
 	fx.In
+
 	Config config.Config
+	Logger logger.Logger
 }
 
 type ServerResult struct {
@@ -16,8 +22,24 @@ type ServerResult struct {
 }
 
 func NewServer(lc fx.Lifecycle, p ServerParams) ServerResult {
+	log := p.Logger
+
 	srv := newServer(p.Config)
-	lc.Append(fx.Hook{OnStart: srv.Run, OnStop: srv.Stop})
+
+	lc.Append(fx.Hook{
+		OnStart: func(ctx context.Context) error {
+			log.Info(ctx,
+				"starting http server",
+				"addr", fmt.Sprintf(":%d", p.Config.ServerPort()),
+				"env", p.Config.Env(),
+			)
+			return srv.Run(ctx)
+		},
+		OnStop: func(ctx context.Context) error {
+			log.Info(ctx, "stopping http server")
+			return srv.Stop(ctx)
+		},
+	})
 
 	return ServerResult{Server: srv}
 }

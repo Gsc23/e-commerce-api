@@ -1,7 +1,7 @@
 package logger
 
 import (
-	"github.com/Gsc23/e-commerce-api/e-commerce-api/pkg/config"
+	"github.com/Gsc23/e-commerce-api/pkg/config"
 	"go.uber.org/fx"
 )
 
@@ -14,8 +14,8 @@ type LoggerParams struct {
 type LoggerResult struct {
 	fx.Out
 
-	Factory      *LoggerFactory
 	GlobalLogger Logger
+	Factory      *LoggerFactory
 }
 
 func LoggerModule() fx.Option {
@@ -24,10 +24,10 @@ func LoggerModule() fx.Option {
 	)
 }
 
-func NewGlobalLogger(p LoggerParams) LoggerResult {
+func NewGlobalLogger(p LoggerParams) (LoggerResult, error) {
 	loggerConfig, err := newLoggerConfig(p.Config)
 	if err != nil {
-		return LoggerResult{}
+		return LoggerResult{}, err
 	}
 
 	factory := NewLoggerFactory(loggerConfig)
@@ -35,5 +35,5 @@ func NewGlobalLogger(p LoggerParams) LoggerResult {
 	return LoggerResult{
 		Factory:      factory,
 		GlobalLogger: factory.NewLoggerNamed("app"),
-	}
+	}, nil
 }

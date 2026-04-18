@@ -3,7 +3,7 @@ package database
 import (
 	"context"
 
-	"github.com/Gsc23/e-commerce-api/e-commerce-api/pkg/config"
+	"github.com/Gsc23/e-commerce-api/pkg/config"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
